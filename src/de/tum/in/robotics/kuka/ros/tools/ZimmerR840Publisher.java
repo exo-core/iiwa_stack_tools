@@ -21,7 +21,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package de.tum.in.robotics;
+package de.tum.in.robotics.kuka.ros.tools;
 
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
@@ -40,7 +40,7 @@ import de.tum.in.camp.kuka.ros.MessageGenerator;
  * This class implements a ROS Node that publishes the current state of the robot. <br>
  * Messages will be send via topics in this format : <robot name>/state/<iiwa_msgs type> (e.g. MyIIWA/state/CartesianPosition)
  */
-public class SchunkEGNPublisher extends AbstractNodeMain {
+public class ZimmerR840Publisher extends AbstractNodeMain {
 
 	// ROSJava Publishers for iiwa_msgs
 	// Joint Message Publishers
@@ -61,7 +61,7 @@ public class SchunkEGNPublisher extends AbstractNodeMain {
 	 * 
 	 * @param robotName : name of the robot, topics will be created accordingly : <robot name>/state/<iiwa_msgs type> (e.g. MyIIWA/state/CartesianPosition)
 	 */
-	public SchunkEGNPublisher(String robotName, Configuration configuration) {
+	public ZimmerR840Publisher(String robotName, Configuration configuration) {
 		this.robotName = robotName;
 		helper = new MessageGenerator(robotName, configuration);
 

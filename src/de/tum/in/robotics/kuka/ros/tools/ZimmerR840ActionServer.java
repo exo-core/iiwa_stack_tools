@@ -21,7 +21,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package de.tum.in.robotics;
+package de.tum.in.robotics.kuka.ros.tools;
 
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -48,7 +48,7 @@ import iiwa_tool_msgs.MoveGripperActionResult;
 
 import org.ros.internal.message.Message;
 
-public class SchunkEGNActionServer extends AbstractNodeMain {
+public class ZimmerR840ActionServer extends AbstractNodeMain {
 	public enum GoalType {
 		MOVE_GRIPPER
 	}
@@ -67,9 +67,9 @@ public class SchunkEGNActionServer extends AbstractNodeMain {
 	
 	public abstract class GripperActionServerListener<T_ACTION_GOAL extends Message> implements ActionServerListener<T_ACTION_GOAL> {
 		private GoalType goalType;
-		private SchunkEGNActionServer server;
+		private ZimmerR840ActionServer server;
 		
-		public GripperActionServerListener(SchunkEGNActionServer server, GoalType goalType) {
+		public GripperActionServerListener(ZimmerR840ActionServer server, GoalType goalType) {
 			this.server = server;
 			this.goalType = goalType;
 		}
@@ -111,9 +111,9 @@ public class SchunkEGNActionServer extends AbstractNodeMain {
 	// Name to use to build the name of the ROS topics
 	private String iiwaName = "iiwa";
 	
-	public SchunkEGNActionServer(String robotName, Configuration configuration) {
+	public ZimmerR840ActionServer(String robotName, Configuration configuration) {
 		iiwaName = robotName;
-		goalQueue = new LinkedBlockingQueue<SchunkEGNActionServer.Goal<?>>();
+		goalQueue = new LinkedBlockingQueue<ZimmerR840ActionServer.Goal<?>>();
 	}
 
 	@Override
