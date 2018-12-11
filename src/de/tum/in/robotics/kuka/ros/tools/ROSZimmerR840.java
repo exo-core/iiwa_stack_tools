@@ -29,7 +29,7 @@ public class ROSZimmerR840 implements ROSTool {
 	private ZimmerR840ActionServer actionServer;
 	protected NodeConfiguration nodeConfActionServer;
 		
-	private boolean moving = false;
+	Goal<MoveGripperActionGoal> _goal = null;
 	
 	/**
 	 * Constructor
@@ -82,20 +82,6 @@ public class ROSZimmerR840 implements ROSTool {
                 );
 	}
 	
-	public boolean isMoving() {
-		return moving;
-	}
-	
-	/**
-	 * Check if a particular bit is set in the status word
-	 * @param statusWord
-	 * @param statusWordBit
-	 * @return
-	 */
-	public boolean isStatusWordBitSet(Integer statusWord, int statusWordBit) {
-		return (statusWord & statusWordBit) == statusWordBit;
-	}
-	
 	/**
 	 * Method is supposed to be called periodically for every control loop iteration
 	 */
@@ -104,7 +90,7 @@ public class ROSZimmerR840 implements ROSTool {
 		if (actionServer.newGoalAvailable()) {
 			//System.out.println("Received new gripper goal.");
 			if (actionServer.hasCurrentGoal()) {
-				actionServer.markCurrentGoalFailed("New goal received");
+				actionServer.markCurrentGoalFailed(_gripper.getGripperState(), "New goal received");
 			}
 			
 			Goal<MoveGripperActionGoal> goal = (Goal<MoveGripperActionGoal>)actionServer.acceptNewGoal();
@@ -117,14 +103,25 @@ public class ROSZimmerR840 implements ROSTool {
 	@Override
 	public void publishCurrentState() throws InterruptedException {
 		double actualPosition = _gripper.getCurrentJawPosition();
-		publisher.publishJointState((double)actualPosition, 0);
+		publisher.publishJointState(actualPosition, 0);
 
 		actionServer.publishCurrentState();
 		
-		GripperState state = _gripper.getGripperState();
-		
 		if (isMoving()) {
-			// TODO: Check for goal reached
+			GripperState state = _gripper.getGripperState();
+			double targetPosition = _goal.goal.getGoal().getPosition();
+			
+			if (targetPosition - 0.1 < actualPosition && actualPosition < targetPosition + 0.1 ) {
+				actionServer.markCurrentGoalReached(state);
+			}
+			else if (targetPosition < actualPosition && state == GripperState.GRIPPED_ITEM) {
+				actionServer.markCurrentGoalReached(state);
+			}
 		}
 	}
+
+	public boolean isMoving() {
+		return _goal != null;
+	}
+	
 }

@@ -33,6 +33,7 @@ import org.ros.node.ConnectedNode;
 import actionlib_msgs.GoalID;
 import actionlib_msgs.GoalStatus;
 
+import com.kuka.grippertoolbox.api.state.GripperState;
 import com.kuka.roboticsAPI.deviceModel.LBR;
 import com.kuka.roboticsAPI.geometricModel.ObjectFrame;
 
@@ -41,7 +42,6 @@ import com.github.rosjava_actionlib.ActionServerListener;
 
 import de.tum.in.camp.kuka.ros.Configuration;
 
-import iiwa_tool_msgs.GripperState;
 import iiwa_tool_msgs.MoveGripperActionFeedback;
 import iiwa_tool_msgs.MoveGripperActionGoal;
 import iiwa_tool_msgs.MoveGripperActionResult;
@@ -141,23 +141,38 @@ public class ZimmerR840ActionServer extends AbstractNodeMain {
 	/**
 	 * Sets current goal to succeeded and publishes result message
 	 */
-	public void markCurrentGoalReached() {
-		markCurrentGoal(true, "");
+	public void markCurrentGoalReached(GripperState state) {
+		markCurrentGoal(true, state, "");
 	}
 
 	/**
 	 * Sets current goal to aborted and publishes result message
 	 */
-	public void markCurrentGoalFailed(String error_msg) {
-		markCurrentGoal(false, error_msg);
+	public void markCurrentGoalFailed(GripperState state, String error_msg) {
+		markCurrentGoal(false, state, error_msg);
 	}
 	
-	private synchronized void markCurrentGoal(boolean succeeded, String error_msg) {
+	private synchronized void markCurrentGoal(boolean succeeded, GripperState state, String error_msg) {
 		if (hasCurrentGoal()) {
 			switch (currentGoal.goalType) {
 				case MOVE_GRIPPER: {
 					MoveGripperActionResult result = moveGripperServer.newResultMessage();
-					result.getResult().getState().setState(GripperState.UNKNOWN);
+					
+					switch (state) {
+					case GRIPPED:
+						result.getResult().getState().setState(iiwa_tool_msgs.GripperState.CLOSED);
+						break;
+					case GRIPPED_ITEM:
+						result.getResult().getState().setState(iiwa_tool_msgs.GripperState.CLOSE_GRASPING);
+						break;
+					case RELEASED:
+						result.getResult().getState().setState(iiwa_tool_msgs.GripperState.OPEN);
+						break;
+					default:
+						result.getResult().getState().setState(iiwa_tool_msgs.GripperState.UNKNOWN);
+						break;
+					}
+					
 					if (succeeded) {
 						result.getStatus().setStatus(GoalStatus.SUCCEEDED);
 						moveGripperServer.setSucceed(currentGoal.goalId);
