@@ -37,14 +37,13 @@ import de.tum.in.camp.kuka.ros.Configuration;
 import de.tum.in.camp.kuka.ros.MessageGenerator;
 
 /**
- * This class implements a ROS Node that publishes the current state of the robot. <br>
- * Messages will be send via topics in this format : <robot name>/state/<iiwa_msgs type> (e.g. MyIIWA/state/CartesianPosition)
+ * This class implements a ROS Node that publishes the current state of the robot tool.
  */
 public class SchunkEGNPublisher extends AbstractNodeMain {
 
 	// ROSJava Publishers for iiwa_msgs
 	// Joint Message Publishers
-	private Publisher<iiwa_msgs.JointPosition> jointPositionPublisher;
+	private Publisher<sensor_msgs.JointState> jointStatePublisher;
 	
 	// Object to easily build iiwa_msgs from the current robot state
 	private MessageGenerator helper;
@@ -66,7 +65,8 @@ public class SchunkEGNPublisher extends AbstractNodeMain {
 		helper = new MessageGenerator(robotName, configuration);
 
 		js = helper.buildMessage(sensor_msgs.JointState._TYPE);
-		js.getName().add("schunk_egn100_finger");
+		js.getName().add("schunk_egn100_rail_1");
+		js.getName().add("schunk_egn100_rail_2");
 		js.setPosition(new double[js.getName().size()]);
 		js.setVelocity(new double[js.getName().size()]);
 		js.setEffort(new double[js.getName().size()]);
@@ -99,7 +99,7 @@ public class SchunkEGNPublisher extends AbstractNodeMain {
 	public void onStart(final ConnectedNode connectedNode) {
 		node = connectedNode;
 		
-		jointPositionPublisher = connectedNode.newPublisher("/joint_state", iiwa_msgs.JointPosition._TYPE);
+		jointStatePublisher = connectedNode.newPublisher(robotName + "/joint_states", sensor_msgs.JointState._TYPE);
 	}
 
 	/**
@@ -112,10 +112,16 @@ public class SchunkEGNPublisher extends AbstractNodeMain {
 	 * @throws InterruptedException
 	 */
 	public void publishJointState(double position, double velocity) throws InterruptedException {
-		helper.incrementSeqNumber(js.getHeader());
-		for (int i=0; i<js.getName().size(); i++) {
-			js.getPosition()[i] = position;
-			js.getVelocity()[i] = velocity;
+
+		if (jointStatePublisher.getNumberOfSubscribers() > 0) {
+			helper.incrementSeqNumber(js.getHeader());
+			js.getHeader().setStamp(helper.getCurrentTime());
+			
+			for (int i=0; i<js.getName().size(); i++) {
+				js.getPosition()[i] = position/1000.0;
+				js.getVelocity()[i] = velocity/1000.0;
+			}
+			jointStatePublisher.publish(js);
 		}
 	}
 }
