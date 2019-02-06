@@ -18,15 +18,42 @@ import com.kuka.roboticsAPI.controllerModel.Controller;
 import com.kuka.roboticsAPI.controllerModel.ExecutionService;
 import com.kuka.roboticsAPI.controllerModel.RequestService;
 
+import de.tum.in.camp.kuka.ros.ActiveTool;
 import de.tum.in.camp.kuka.ros.AddressGeneration;
 import de.tum.in.camp.kuka.ros.Configuration;
 import de.tum.in.camp.kuka.ros.Logger;
-import de.tum.in.camp.kuka.ros.ROSTool;
 import de.tum.in.camp.kuka.ros.iiwaActionServer;
 import de.tum.in.camp.kuka.ros.iiwaPublisher;
 import de.tum.in.robotics.SchunkEGNActionServer.Goal;
 
-public class SchunkEGN100 implements ROSTool {
+public class SchunkEGN100 implements ActiveTool {
+	
+	public static final int CW_COMMAND_ENABLE_A_BIT           = Integer.parseInt("0000000000000001", 2);
+	public static final int CW_COMMAND_ENABLE_B_BIT           = Integer.parseInt("0000000000000010", 2);
+	public static final int CW_ACCEPT_JERK_BIT                = Integer.parseInt("0000000000000100", 2);
+	public static final int CW_ACCEPT_ACCELERATION_BIT        = Integer.parseInt("0000000000001000", 2);
+	public static final int CW_ACCEPT_CURRENT_BIT             = Integer.parseInt("0000000000010000", 2);
+	public static final int CW_ACCEPT_SPEED_BIT               = Integer.parseInt("0000000000100000", 2);
+	public static final int CW_APPROACH_POSITION_BIT          = Integer.parseInt("0000000001000000", 2);
+	public static final int CW_APPROACH_RELATIVE_POSITION_BIT = Integer.parseInt("0000000010000000", 2);
+	public static final int CW_REFERENCING_BIT                = Integer.parseInt("0000001000000000", 2);
+	public static final int CW_RESTART_MODULE_BIT             = Integer.parseInt("0001000000000000", 2);
+	public static final int CW_ACKNOWLEDGE_ERROR_BIT          = Integer.parseInt("0010000000000000", 2);
+	public static final int CW_STOP_BIT                       = Integer.parseInt("0100000000000000", 2);
+	public static final int CW_FAST_STOP_BIT                  = Integer.parseInt("1000000000000000", 2);
+	
+	public static final int SW_COMMAND_RELEASE_A_BIT          = Integer.parseInt("0000000000000001", 2);
+	public static final int SW_COMMAND_RELEASE_B_BIT          = Integer.parseInt("0000000000000010", 2);
+	public static final int SW_MODULE_READY_BIT               = Integer.parseInt("0000000001000000", 2);
+	public static final int SW_MODULE_MOVING_BIT              = Integer.parseInt("0000000100000000", 2);
+	public static final int SW_TARGET_POSITION_REACHED_BIT    = Integer.parseInt("0000001000000000", 2);
+	public static final int SW_MOTION_BLOCKED_BIT             = Integer.parseInt("0000010000000000", 2);
+	public static final int SW_BRAKE_ENGAGED_BIT              = Integer.parseInt("0000100000000000", 2);
+	public static final int SW_MODULE_REFERENCED_BIT          = Integer.parseInt("0001000000000000", 2);
+	public static final int SW_INFO_BIT                       = Integer.parseInt("0010000000000000", 2);
+	public static final int SW_WARNING_BIT                    = Integer.parseInt("0100000000000000", 2);
+	public static final int SW_ERROR_BIT                      = Integer.parseInt("1000000000000000", 2);
+
 	private class SendCommandThread extends Thread {
 		boolean running = true;
 		boolean sendReset = false;
@@ -115,7 +142,7 @@ public class SchunkEGN100 implements ROSTool {
 				sendMotionFailedSignal();
 			}
 
-			float actualPosition = convertSchunkToJava(ioGroup.getActualPosition().intValue());
+			float actualPosition = convertSchunkToJava(ioGroup.getActualPossition().intValue());
 			if (actualPosition - 0.01 < position && position < actualPosition + 0.01) {
 				// current position and target position are identical
 				sendMotionFinishedSignal();
@@ -129,7 +156,7 @@ public class SchunkEGN100 implements ROSTool {
 			boolean motionStarted = false;
 			while(!motionStarted) {
 				Integer controlWord = (CW_COMMAND_ENABLE_A_BIT | CW_APPROACH_POSITION_BIT | CW_STOP_BIT | CW_FAST_STOP_BIT);
-				ioGroup.setDesiredPosition((long) convertJavaToSchunk(position));
+				ioGroup.setDesiredPossintion((long) convertJavaToSchunk(position));
 		
 				if (speed > 0.01) {
 					controlWord |= CW_ACCEPT_SPEED_BIT;
@@ -142,7 +169,7 @@ public class SchunkEGN100 implements ROSTool {
 				
 				//System.out.println("statusWord before motion start "+Integer.toBinaryString(statusWord));
 				if (isStatusWordBitSet(statusWord, SW_MODULE_MOVING_BIT)) {
-					System.out.println("Motion started.");
+					System.out.println("Gripper motion started.");
 					motionStarted = true;
 				}
 				else if (!isStatusWordBitSet(statusWord, SW_MODULE_READY_BIT) || isStatusWordBitSet(statusWord, SW_COMMAND_RELEASE_A_BIT)) {
@@ -178,32 +205,6 @@ public class SchunkEGN100 implements ROSTool {
 	
 	private SchunkEGNActionServer actionServer;
 	protected NodeConfiguration nodeConfActionServer;
-	
-	public static final int CW_COMMAND_ENABLE_A_BIT           = Integer.parseInt("0000000000000001", 2);
-	public static final int CW_COMMAND_ENABLE_B_BIT           = Integer.parseInt("0000000000000010", 2);
-	public static final int CW_ACCEPT_JERK_BIT                = Integer.parseInt("0000000000000100", 2);
-	public static final int CW_ACCEPT_ACCELERATION_BIT        = Integer.parseInt("0000000000001000", 2);
-	public static final int CW_ACCEPT_CURRENT_BIT             = Integer.parseInt("0000000000010000", 2);
-	public static final int CW_ACCEPT_SPEED_BIT               = Integer.parseInt("0000000000100000", 2);
-	public static final int CW_APPROACH_POSITION_BIT          = Integer.parseInt("0000000001000000", 2);
-	public static final int CW_APPROACH_RELATIVE_POSITION_BIT = Integer.parseInt("0000000010000000", 2);
-	public static final int CW_REFERENCING_BIT                = Integer.parseInt("0000001000000000", 2);
-	public static final int CW_RESTART_MODULE_BIT             = Integer.parseInt("0001000000000000", 2);
-	public static final int CW_ACKNOWLEDGE_ERROR_BIT          = Integer.parseInt("0010000000000000", 2);
-	public static final int CW_STOP_BIT                       = Integer.parseInt("0100000000000000", 2);
-	public static final int CW_FAST_STOP_BIT                  = Integer.parseInt("1000000000000000", 2);
-	
-	public static final int SW_COMMAND_RELEASE_A_BIT          = Integer.parseInt("0000000000000001", 2);
-	public static final int SW_COMMAND_RELEASE_B_BIT          = Integer.parseInt("0000000000000010", 2);
-	public static final int SW_MODULE_READY_BIT               = Integer.parseInt("0000000001000000", 2);
-	public static final int SW_MODULE_MOVING_BIT              = Integer.parseInt("0000000100000000", 2);
-	public static final int SW_TARGET_POSITION_REACHED_BIT    = Integer.parseInt("0000001000000000", 2);
-	public static final int SW_MOTION_BLOCKED_BIT             = Integer.parseInt("0000010000000000", 2);
-	public static final int SW_BRAKE_ENGAGED_BIT              = Integer.parseInt("0000100000000000", 2);
-	public static final int SW_MODULE_REFERENCED_BIT          = Integer.parseInt("0001000000000000", 2);
-	public static final int SW_INFO_BIT                       = Integer.parseInt("0010000000000000", 2);
-	public static final int SW_WARNING_BIT                    = Integer.parseInt("0100000000000000", 2);
-	public static final int SW_ERROR_BIT                      = Integer.parseInt("1000000000000000", 2);
 		
 	private boolean moving = false;
 	
@@ -218,22 +219,22 @@ public class SchunkEGN100 implements ROSTool {
 	public void initialize(Configuration configuration, NodeMainExecutor mainExecutor) {
 		startCommunicationThread();
 
-		publisher = new SchunkEGNPublisher(Configuration.getRobotName(), configuration);
-		actionServer = new SchunkEGNActionServer(Configuration.getRobotName(), configuration);
+		publisher = new SchunkEGNPublisher(configuration.getRobotName(), configuration);
+		actionServer = new SchunkEGNActionServer(configuration.getRobotName(), configuration);
 		
 		try {
-			URI uri = new URI(Configuration.getMasterURI());
+			URI uri = new URI(configuration.getMasterURI());
 			
-			nodeConfActionServer = NodeConfiguration.newPublic(Configuration.getRobotIp());
+			nodeConfActionServer = NodeConfiguration.newPublic(configuration.getRobotIp());
 			nodeConfActionServer.setTimeProvider(configuration.getTimeProvider());
-			nodeConfActionServer.setNodeName(Configuration.getRobotName() + "/tool_action_server");
+			nodeConfActionServer.setNodeName(configuration.getRobotName() + "/tool_action_server");
 			nodeConfActionServer.setMasterUri(uri);	
 			nodeConfActionServer.setTcpRosBindAddress(BindAddress.newPublic(AddressGeneration.getNewAddress()));
 			nodeConfActionServer.setXmlRpcBindAddress(BindAddress.newPublic(AddressGeneration.getNewAddress()));
 
-			nodeConfPublisher = NodeConfiguration.newPublic(Configuration.getRobotIp());
+			nodeConfPublisher = NodeConfiguration.newPublic(configuration.getRobotIp());
 			nodeConfPublisher.setTimeProvider(configuration.getTimeProvider());
-			nodeConfPublisher.setNodeName(Configuration.getRobotName() + "/tool_publisher");
+			nodeConfPublisher.setNodeName(configuration.getRobotName() + "/tool_publisher");
 			nodeConfPublisher.setMasterUri(uri);
 			nodeConfPublisher.setTcpRosBindAddress(BindAddress.newPublic(AddressGeneration.getNewAddress()));
 			nodeConfPublisher.setXmlRpcBindAddress(BindAddress.newPublic(AddressGeneration.getNewAddress()));
@@ -295,7 +296,7 @@ public class SchunkEGN100 implements ROSTool {
 	}
 
 	public void sendMotionFailedSignal() {
-		System.err.println("Motion failed!");
+		System.err.println("Gripper motion failed!");
 		if (actionServer.hasCurrentGoal()) {
 			System.out.println("Sending goal failed signal.");
 			actionServer.markCurrentGoalFailed("Motion failed");
@@ -312,7 +313,7 @@ public class SchunkEGN100 implements ROSTool {
 
 	@Override
 	public void publishCurrentState() throws InterruptedException {
-		float actualPosition = convertSchunkToJava(ioGroup.getActualPosition().intValue());
+		float actualPosition = convertSchunkToJava(ioGroup.getActualPossition().intValue());
 		float actualVelocity = convertSchunkToJava(ioGroup.getActualSpeed().intValue());
 		publisher.publishJointState((double)actualPosition, (double)actualVelocity);
 
@@ -321,19 +322,17 @@ public class SchunkEGN100 implements ROSTool {
 		Integer statusWord = ioGroup.getStatusWord();
 		
 		if (isMoving()) {
-			//System.out.println("Actual Position: "+actualPosition+" ("+Long.toHexString(ioGroup.getActualPosition())+")");
+			//System.out.println("Actual Position: "+actualPosition+" ("+Long.toHexString(ioGroup.getActualPossition())+")");
 			//System.out.println("Status Word: "+Long.toBinaryString(statusWord)+", isMoving(): "+isMovinng());
 			
 			float targetPosition = (float)communicationThread.getMotionGoal().getGoal().getPosition();
 
 			if (isStatusWordBitSet(statusWord, SW_TARGET_POSITION_REACHED_BIT) || (targetPosition - 0.1f < actualPosition && actualPosition < targetPosition + 0.1f)) {
 				moving = false;
-				//ioGroup.setControlWord(getBasicControlWord());
 				sendMotionFinishedSignal();
 			}
 			else if (isStatusWordBitSet(statusWord, SW_MOTION_BLOCKED_BIT) || isStatusWordBitSet(statusWord, SW_ERROR_BIT)) {
 				moving = false;
-				//ioGroup.setControlWord(getBasicControlWord());
 				sendMotionFailedSignal();
 			}
 			else if (!isStatusWordBitSet(statusWord, SW_MODULE_MOVING_BIT) || isStatusWordBitSet(statusWord, SW_BRAKE_ENGAGED_BIT)) {

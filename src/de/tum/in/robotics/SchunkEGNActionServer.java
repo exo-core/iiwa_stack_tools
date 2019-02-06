@@ -96,7 +96,9 @@ public class SchunkEGNActionServer extends AbstractNodeMain {
 		 */
 		@Override
 		public void goalReceived(T_ACTION_GOAL goal) {
-			server.goalQueue.add(new Goal<T_ACTION_GOAL>(goalType, goal, this.getGoalId(goal)));
+			synchronized (server) {
+				server.goalQueue.add(new Goal<T_ACTION_GOAL>(goalType, goal, this.getGoalId(goal)));	
+			}
 		}
 		
 		public abstract String getGoalId(T_ACTION_GOAL goal);
@@ -158,6 +160,7 @@ public class SchunkEGNActionServer extends AbstractNodeMain {
 				case MOVE_GRIPPER: {
 					MoveGripperActionResult result = moveGripperServer.newResultMessage();
 					result.getResult().getState().setState(GripperState.UNKNOWN);
+					result.getStatus().getGoalId().setId(currentGoal.goalId);
 					if (succeeded) {
 						result.getStatus().setStatus(GoalStatus.SUCCEEDED);
 						moveGripperServer.setSucceed(currentGoal.goalId);

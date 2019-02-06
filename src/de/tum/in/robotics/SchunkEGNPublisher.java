@@ -62,7 +62,7 @@ public class SchunkEGNPublisher extends AbstractNodeMain {
 	 */
 	public SchunkEGNPublisher(String robotName, Configuration configuration) {
 		this.robotName = robotName;
-		helper = new MessageGenerator(robotName, configuration);
+		helper = new MessageGenerator(robotName, configuration.getTimeProvider());
 
 		js = helper.buildMessage(sensor_msgs.JointState._TYPE);
 		js.getName().add("schunk_egn100_rail_1");
