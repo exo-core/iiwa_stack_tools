@@ -1,8 +1,8 @@
 /**  
  * Copyright (C) 2018 Arne Peters - arne.peters@tum.de
- * Technische Universität München
+ * Technische Universitï¿½t Mï¿½nchen
  * Chair for Robotics, Artificial Intelligence and Embedded Systems 
- * Fakultät für Informatik / I6, Boltzmannstraße 3, 85748 Garching bei München, Germany
+ * Fakultï¿½t fï¿½r Informatik / I6, Boltzmannstraï¿½e 3, 85748 Garching bei Mï¿½nchen, Germany
  * http://www6.in.tum.de
  * All rights reserved.
  * 
@@ -21,7 +21,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package de.tum.in.robotics;
+package de.tum.in.robotics.schunk.egn100;
 
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;

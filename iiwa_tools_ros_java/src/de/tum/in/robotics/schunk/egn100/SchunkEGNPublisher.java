@@ -1,9 +1,9 @@
 /**  
- * Copyright (C) 2016-2017 Salvatore Virga - salvo.virga@tum.de, Marco Esposito - marco.esposito@tum.de
- * Technische Universität München
- * Chair for Computer Aided Medical Procedures and Augmented Reality
- * Fakultät für Informatik / I16, Boltzmannstraße 3, 85748 Garching bei München, Germany
- * http://campar.in.tum.de
+ * Copyright (C) 2018 Arne Peters - arne.peters@tum.de
+ * Technische Universitï¿½t Mï¿½nchen
+ * Chair for Robotics, Artificial Intelligence and Embedded Systems
+ * Fakultï¿½t fï¿½r Informatik / I6, Boltzmannstraï¿½e 3, 85748 Garching bei Mï¿½nchen, Germany
+ * http://www6.in.tum.de
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -21,7 +21,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package de.tum.in.robotics;
+package de.tum.in.robotics.schunk.egn100;
 
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
