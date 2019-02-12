@@ -1,4 +1,4 @@
-# iiwa_stack_tools
+1# iiwa_stack_tools
 
 This repository provides ROS wrappers for some tools that we have been using so far together with our iiwa.
 For installation check out the following steps:
@@ -23,7 +23,11 @@ For installation check out the following steps:
 8.  Open the object template view (usually on the right side of Sunrise workbench) and look for your tool. Create a frame called `<TOOL_NAME>_link_ee` (e.g. `schunk_egn100_link_ee`)
 9.  Synchronize your project with the robot controller.
 10. Make sure you have `/iiwa/toolName` parameter configured in ROS:
-    ```<param name="/iiwa/toolName" type="string" value="$(arg tool_name)" />```
+    ```
+         <param name="/iiwa/toolName" type="string" value="TOOL_NAME" />
+    ```
 11. If you want Sunrise to interpret and publish the CartesianPose of the iiwa in tool coordinates set the correct endpoint frame:
-    ```<param name="/iiwa/endpointFrame" type="string" value="TOOL_NAME_link_ee" />```
+    ```
+        <param name="/iiwa/endpointFrame" type="string" value="TOOL_NAME_link_ee" />
+    ```
 12. Start the ROSSmartServo application as usual.
