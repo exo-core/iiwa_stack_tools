@@ -34,8 +34,6 @@ import actionlib_msgs.GoalID;
 import actionlib_msgs.GoalStatus;
 
 import com.kuka.grippertoolbox.api.state.GripperState;
-import com.kuka.roboticsAPI.deviceModel.LBR;
-import com.kuka.roboticsAPI.geometricModel.ObjectFrame;
 
 import com.github.rosjava_actionlib.ActionServer;
 import com.github.rosjava_actionlib.ActionServerListener;
@@ -88,7 +86,7 @@ public class ZimmerR840ActionServer extends AbstractNodeMain {
 		 */
 		@Override
 		public void cancelReceived(GoalID arg0) {
-			server.markCurrentGoalFailed("Goal execution canceled by client.");
+			server.markCurrentGoalFailed(GripperState.UNDEFINED, "Goal execution canceled by client.");
 		}
 
 		/**
@@ -96,7 +94,9 @@ public class ZimmerR840ActionServer extends AbstractNodeMain {
 		 */
 		@Override
 		public void goalReceived(T_ACTION_GOAL goal) {
-			server.goalQueue.add(new Goal<T_ACTION_GOAL>(goalType, goal, this.getGoalId(goal)));
+			synchronized (server) {
+				server.goalQueue.add(new Goal<T_ACTION_GOAL>(goalType, goal, this.getGoalId(goal)));
+			}
 		}
 		
 		public abstract String getGoalId(T_ACTION_GOAL goal);
@@ -111,8 +111,8 @@ public class ZimmerR840ActionServer extends AbstractNodeMain {
 	// Name to use to build the name of the ROS topics
 	private String iiwaName = "iiwa";
 	
-	public ZimmerR840ActionServer(String robotName, Configuration configuration) {
-		iiwaName = robotName;
+	public ZimmerR840ActionServer(Configuration configuration) {
+		iiwaName = configuration.getRobotName();
 		goalQueue = new LinkedBlockingQueue<ZimmerR840ActionServer.Goal<?>>();
 	}
 

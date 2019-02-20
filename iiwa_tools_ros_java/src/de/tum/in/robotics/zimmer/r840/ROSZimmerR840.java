@@ -36,13 +36,12 @@ import org.ros.node.NodeMainExecutor;
 import com.kuka.grippertoolbox.api.state.GripperState;
 import com.kuka.grippertoolbox.gripper.zimmer.ZimmerR840;
 
-import de.tum.in.camp.kuka.ros.AddressGeneration;
+import de.tum.in.camp.kuka.ros.ActiveTool;
 import de.tum.in.camp.kuka.ros.Configuration;
 import de.tum.in.camp.kuka.ros.Logger;
-import de.tum.in.camp.kuka.ros.ROSTool;
-import de.tum.in.robotics.kuka.ros.tools.ZimmerR840ActionServer.Goal;
+import de.tum.in.robotics.zimmer.r840.ZimmerR840ActionServer.Goal;
 
-public class ROSZimmerR840 implements ROSTool {
+public class ROSZimmerR840 implements ActiveTool {
     @Inject
     private ZimmerR840 _gripper;
 	
@@ -63,27 +62,29 @@ public class ROSZimmerR840 implements ROSTool {
 	
 	@Override
 	public void initialize(Configuration configuration, NodeMainExecutor mainExecutor) {
-        _gripper.initialize();
+		synchronized (_gripper) {
+			_gripper.initialize();
+		}
 
-		publisher = new ZimmerR840Publisher(Configuration.getRobotName(), configuration);
-		actionServer = new ZimmerR840ActionServer(Configuration.getRobotName(), configuration);
+		publisher = new ZimmerR840Publisher(configuration);
+		actionServer = new ZimmerR840ActionServer(configuration);
 		
 		try {
-			URI uri = new URI(Configuration.getMasterURI());
+			URI uri = configuration.getMasterURI();
 			
-			nodeConfActionServer = NodeConfiguration.newPublic(Configuration.getRobotIp());
+			nodeConfActionServer = NodeConfiguration.newPublic(configuration.getRobotIp());
 			nodeConfActionServer.setTimeProvider(configuration.getTimeProvider());
-			nodeConfActionServer.setNodeName(Configuration.getRobotName() + "/tool_action_server");
+			nodeConfActionServer.setNodeName(configuration.getRobotName() + "/tool_action_server");
 			nodeConfActionServer.setMasterUri(uri);	
-			nodeConfActionServer.setTcpRosBindAddress(BindAddress.newPublic(AddressGeneration.getNewAddress()));
-			nodeConfActionServer.setXmlRpcBindAddress(BindAddress.newPublic(AddressGeneration.getNewAddress()));
+			nodeConfActionServer.setTcpRosBindAddress(BindAddress.newPublic(30008));
+			nodeConfActionServer.setXmlRpcBindAddress(BindAddress.newPublic(30009));
 
-			nodeConfPublisher = NodeConfiguration.newPublic(Configuration.getRobotIp());
+			nodeConfPublisher = NodeConfiguration.newPublic(configuration.getRobotIp());
 			nodeConfPublisher.setTimeProvider(configuration.getTimeProvider());
-			nodeConfPublisher.setNodeName(Configuration.getRobotName() + "/tool_publisher");
+			nodeConfPublisher.setNodeName(configuration.getRobotName() + "/tool_publisher");
 			nodeConfPublisher.setMasterUri(uri);
-			nodeConfPublisher.setTcpRosBindAddress(BindAddress.newPublic(AddressGeneration.getNewAddress()));
-			nodeConfPublisher.setXmlRpcBindAddress(BindAddress.newPublic(AddressGeneration.getNewAddress()));
+			nodeConfPublisher.setTcpRosBindAddress(BindAddress.newPublic(30010));
+			nodeConfPublisher.setXmlRpcBindAddress(BindAddress.newPublic(30011));
 		}
 		catch (Exception e) {
 			Logger.info(e.toString());
@@ -93,16 +94,18 @@ public class ROSZimmerR840 implements ROSTool {
 		mainExecutor.execute(actionServer, nodeConfActionServer);
 		mainExecutor.execute(publisher, nodeConfPublisher);
 		
-		// create a default release mode
-        _gripper.setDefaultReleaseMode(ZimmerR840.createAbsoluteMode(0)
-                .setVelocity(30.0)
-                );
-
-        // create a default grip mode
-        _gripper.setDefaultGripMode(ZimmerR840.createForceMode()
-                .setMaxCurrent(1.0)
-                .setVelocity(30.0)
-                );
+		synchronized (_gripper) {
+			// create a default release mode
+	        _gripper.setDefaultReleaseMode(ZimmerR840.createAbsoluteMode(0)
+	                .setVelocity(30.0)
+	                );
+	
+	        // create a default grip mode
+	        _gripper.setDefaultGripMode(ZimmerR840.createForceMode()
+	                .setMaxCurrent(1.0)
+	                .setVelocity(30.0)
+	                );
+		}
 	}
 	
 	/**
@@ -111,6 +114,7 @@ public class ROSZimmerR840 implements ROSTool {
 	@Override
 	public void moveTool() {
 		if (actionServer.newGoalAvailable()) {
+			synchronized (_gripper) {
 			//System.out.println("Received new gripper goal.");
 			if (actionServer.hasCurrentGoal()) {
 				actionServer.markCurrentGoalFailed(_gripper.getGripperState(), "New goal received");
@@ -120,26 +124,29 @@ public class ROSZimmerR840 implements ROSTool {
 			_gripper.gripAsync(ZimmerR840.createAbsoluteMode(goal.goal.getGoal().getPosition())
 	                .setVelocity(goal.goal.getGoal().getVelocity())
 	                );
+			}
 		}
 	}
 
 	@Override
 	public void publishCurrentState() throws InterruptedException {
-		double actualPosition = _gripper.getCurrentJawPosition();
-		publisher.publishJointState(actualPosition, 0);
-
-		actionServer.publishCurrentState();
-		
-		if (isMoving()) {
-			GripperState state = _gripper.getGripperState();
-			double targetPosition = _goal.goal.getGoal().getPosition();
+		synchronized (_gripper) {
+			double actualPosition = _gripper.getCurrentJawPosition();
+			publisher.publishJointState(actualPosition, 0);
+	
+			actionServer.publishCurrentState();
 			
-			if (targetPosition - 0.1 < actualPosition && actualPosition < targetPosition + 0.1 ) {
-				actionServer.markCurrentGoalReached(state);
-			}
-			else if (targetPosition < actualPosition && state == GripperState.GRIPPED_ITEM) {
-				actionServer.markCurrentGoalReached(state);
-			}
+			if (isMoving()) {
+				GripperState state = _gripper.getGripperState();
+				double targetPosition = _goal.goal.getGoal().getPosition();
+				
+				if (targetPosition - 0.1 < actualPosition && actualPosition < targetPosition + 0.1 ) {
+					actionServer.markCurrentGoalReached(state);
+				}
+				else if (targetPosition < actualPosition && state == GripperState.GRIPPED_ITEM) {
+					actionServer.markCurrentGoalReached(state);
+				}
+			}	
 		}
 	}
 

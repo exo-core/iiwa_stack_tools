@@ -28,11 +28,6 @@ import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 
-import com.kuka.connectivity.motionModel.smartServo.SmartServo;
-import com.kuka.roboticsAPI.deviceModel.LBR;
-import com.kuka.roboticsAPI.geometricModel.ObjectFrame;
-import com.kuka.roboticsAPI.motionModel.controlModeModel.JointImpedanceControlMode;
-
 import de.tum.in.camp.kuka.ros.Configuration;
 import de.tum.in.camp.kuka.ros.MessageGenerator;
 
@@ -44,7 +39,7 @@ public class ZimmerR840Publisher extends AbstractNodeMain {
 
 	// ROSJava Publishers for iiwa_msgs
 	// Joint Message Publishers
-	private Publisher<iiwa_msgs.JointPosition> jointPositionPublisher;
+	private Publisher<sensor_msgs.JointState> jointStatePublisher;
 	
 	// Object to easily build iiwa_msgs from the current robot state
 	private MessageGenerator helper;
@@ -54,6 +49,9 @@ public class ZimmerR840Publisher extends AbstractNodeMain {
 
 	// Cache objects
 	private sensor_msgs.JointState js;
+	
+	// Configuration
+	private boolean publishJointStates;
 
 	/**
 	 * Create a ROS node with publishers for a robot state. <br>
@@ -61,12 +59,14 @@ public class ZimmerR840Publisher extends AbstractNodeMain {
 	 * 
 	 * @param robotName : name of the robot, topics will be created accordingly : <robot name>/state/<iiwa_msgs type> (e.g. MyIIWA/state/CartesianPosition)
 	 */
-	public ZimmerR840Publisher(String robotName, Configuration configuration) {
-		this.robotName = robotName;
-		helper = new MessageGenerator(robotName, configuration);
+	public ZimmerR840Publisher(Configuration configuration) {
+		this.robotName = configuration.getRobotName();
+		this.publishJointStates = configuration.getPublishJointStates();
+		helper = new MessageGenerator(robotName, configuration.getTimeProvider());
 
 		js = helper.buildMessage(sensor_msgs.JointState._TYPE);
-		js.getName().add("schunk_egn100_finger");
+		js.getName().add("zimmer_r840_rail_1");
+		js.getName().add("zimmer_r840_rail_2");
 		js.setPosition(new double[js.getName().size()]);
 		js.setVelocity(new double[js.getName().size()]);
 		js.setEffort(new double[js.getName().size()]);
@@ -98,8 +98,8 @@ public class ZimmerR840Publisher extends AbstractNodeMain {
 	@Override
 	public void onStart(final ConnectedNode connectedNode) {
 		node = connectedNode;
-		
-		jointPositionPublisher = connectedNode.newPublisher("/joint_state", iiwa_msgs.JointPosition._TYPE);
+
+		jointStatePublisher = connectedNode.newPublisher(robotName + "/joint_states", sensor_msgs.JointState._TYPE);
 	}
 
 	/**
@@ -112,10 +112,15 @@ public class ZimmerR840Publisher extends AbstractNodeMain {
 	 * @throws InterruptedException
 	 */
 	public void publishJointState(double position, double velocity) throws InterruptedException {
-		helper.incrementSeqNumber(js.getHeader());
-		for (int i=0; i<js.getName().size(); i++) {
-			js.getPosition()[i] = position;
-			js.getVelocity()[i] = velocity;
+		if (publishJointStates && jointStatePublisher.getNumberOfSubscribers() > 0) {
+			helper.incrementSeqNumber(js.getHeader());
+			js.getHeader().setStamp(helper.getCurrentTime());
+			
+			for (int i=0; i<js.getName().size(); i++) {
+				js.getPosition()[i] = position/1000.0;
+				js.getVelocity()[i] = velocity/1000.0;
+			}
+			jointStatePublisher.publish(js);
 		}
 	}
 }
