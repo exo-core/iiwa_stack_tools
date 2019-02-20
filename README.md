@@ -1,4 +1,4 @@
-https://github.com/IFL-CAMP/iiwa_stack# iiwa_stack_tools
+# iiwa_stack_tools
 
 This repository provides ROS wrappers for some tools that we have been using so far together with our iiwa.
 For installation check out the following steps:
@@ -31,4 +31,4 @@ For installation check out the following steps:
     ```
         <param name="/iiwa/endpointFrame" type="string" value="TOOL_NAME_link_ee" />
     ```
-13. Start the ROSSmartServo application as usual.
+13https://github.com/IFL-CAMP/iiwa_stackhttps://github.com/IFL-CAMP/iiwa_stackhttps://github.com/IFL-CAMP/iiwa_stackhttps://github.com/IFL-CAMP/iiwa_stackhttps://github.com/IFL-CAMP/iiwa_stack. Start the ROSSmartServo application as usual.
