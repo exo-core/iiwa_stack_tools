@@ -1,8 +1,8 @@
 /**
  * Copyright (C) 2018 Arne Peters - arne.peters@tum.de
- * Technische Universitï¿½t Mï¿½nchen
+ * Technische Universität München
  * Chair for Robotics, Artificial Intelligence and Embedded Systems
- * Fakultï¿½t fï¿½r Informatik / I6, Boltzmannstraï¿½e 3, 85748 Garching bei Mï¿½nchen, Germany
+ * Fakultät für Informatik / I6, Boltzmannstraße 3, 85748 Garching bei München, Germany
  * http://www6.in.tum.de
  * All rights reserved.
  *
@@ -36,7 +36,7 @@ import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 
 import com.kuka.common.ThreadUtil;
-import com.kuka.generated.ioAccess.SchunkGripperIOGroup;
+import com.kuka.generated.ioAccess.SchunkIOGroup;
 import com.kuka.roboticsAPI.controllerModel.Controller;
 import com.kuka.roboticsAPI.controllerModel.ExecutionService;
 import com.kuka.roboticsAPI.controllerModel.RequestService;
@@ -47,7 +47,7 @@ import de.tum.in.camp.kuka.ros.Configuration;
 import de.tum.in.camp.kuka.ros.Logger;
 import de.tum.in.camp.kuka.ros.iiwaActionServer;
 import de.tum.in.camp.kuka.ros.iiwaPublisher;
-import de.tum.in.robotics.SchunkEGNActionServer.Goal;
+import de.tum.in.robotics.schunk.egn100.SchunkEGNActionServer.Goal;
 
 public class SchunkEGN100 implements ActiveTool {
 	
@@ -76,7 +76,7 @@ public class SchunkEGN100 implements ActiveTool {
 	public static final int SW_INFO_BIT                       = Integer.parseInt("0010000000000000", 2);
 	public static final int SW_WARNING_BIT                    = Integer.parseInt("0100000000000000", 2);
 	public static final int SW_ERROR_BIT                      = Integer.parseInt("1000000000000000", 2);
-
+	
 	private class SendCommandThread extends Thread {
 		boolean running = true;
 		boolean sendReset = false;
@@ -165,7 +165,7 @@ public class SchunkEGN100 implements ActiveTool {
 				sendMotionFailedSignal();
 			}
 
-			float actualPosition = convertSchunkToJava(ioGroup.getActualPossition().intValue());
+			float actualPosition = convertSchunkToJava(ioGroup.getActualPosition().intValue());
 			if (actualPosition - 0.01 < position && position < actualPosition + 0.01) {
 				// current position and target position are identical
 				sendMotionFinishedSignal();
@@ -179,7 +179,7 @@ public class SchunkEGN100 implements ActiveTool {
 			boolean motionStarted = false;
 			while(!motionStarted) {
 				Integer controlWord = (CW_COMMAND_ENABLE_A_BIT | CW_APPROACH_POSITION_BIT | CW_STOP_BIT | CW_FAST_STOP_BIT);
-				ioGroup.setDesiredPossintion((long) convertJavaToSchunk(position));
+				ioGroup.setDesiredPosition((long) convertJavaToSchunk(position));
 		
 				if (speed > 0.01) {
 					controlWord |= CW_ACCEPT_SPEED_BIT;
@@ -221,7 +221,7 @@ public class SchunkEGN100 implements ActiveTool {
 	
 	private SendCommandThread communicationThread;
 	
-	@Inject private SchunkGripperIOGroup ioGroup;
+	@Inject private SchunkIOGroup ioGroup;
 	
 	private SchunkEGNPublisher publisher;
 	protected NodeConfiguration nodeConfPublisher;
@@ -252,15 +252,15 @@ public class SchunkEGN100 implements ActiveTool {
 			nodeConfActionServer.setTimeProvider(configuration.getTimeProvider());
 			nodeConfActionServer.setNodeName(configuration.getRobotName() + "/tool_action_server");
 			nodeConfActionServer.setMasterUri(uri);	
-			nodeConfActionServer.setTcpRosBindAddress(BindAddress.newPublic(AddressGeneration.getNewAddress()));
-			nodeConfActionServer.setXmlRpcBindAddress(BindAddress.newPublic(AddressGeneration.getNewAddress()));
+			nodeConfActionServer.setTcpRosBindAddress(BindAddress.newPublic(30008));
+			nodeConfActionServer.setXmlRpcBindAddress(BindAddress.newPublic(30009));
 
 			nodeConfPublisher = NodeConfiguration.newPublic(configuration.getRobotIp());
 			nodeConfPublisher.setTimeProvider(configuration.getTimeProvider());
 			nodeConfPublisher.setNodeName(configuration.getRobotName() + "/tool_publisher");
 			nodeConfPublisher.setMasterUri(uri);
-			nodeConfPublisher.setTcpRosBindAddress(BindAddress.newPublic(AddressGeneration.getNewAddress()));
-			nodeConfPublisher.setXmlRpcBindAddress(BindAddress.newPublic(AddressGeneration.getNewAddress()));
+			nodeConfPublisher.setTcpRosBindAddress(BindAddress.newPublic(30010));
+			nodeConfPublisher.setXmlRpcBindAddress(BindAddress.newPublic(30011));
 		}
 		catch (Exception e) {
 			Logger.info(e.toString());
@@ -336,7 +336,7 @@ public class SchunkEGN100 implements ActiveTool {
 
 	@Override
 	public void publishCurrentState() throws InterruptedException {
-		float actualPosition = convertSchunkToJava(ioGroup.getActualPossition().intValue());
+		float actualPosition = convertSchunkToJava(ioGroup.getActualPosition().intValue());
 		float actualVelocity = convertSchunkToJava(ioGroup.getActualSpeed().intValue());
 		publisher.publishJointState((double)actualPosition, (double)actualVelocity);
 
@@ -352,10 +352,12 @@ public class SchunkEGN100 implements ActiveTool {
 
 			if (isStatusWordBitSet(statusWord, SW_TARGET_POSITION_REACHED_BIT) || (targetPosition - 0.1f < actualPosition && actualPosition < targetPosition + 0.1f)) {
 				moving = false;
+				//ioGroup.setControlWord(getBasicControlWord());
 				sendMotionFinishedSignal();
 			}
 			else if (isStatusWordBitSet(statusWord, SW_MOTION_BLOCKED_BIT) || isStatusWordBitSet(statusWord, SW_ERROR_BIT)) {
 				moving = false;
+				//ioGroup.setControlWord(getBasicControlWord());
 				sendMotionFailedSignal();
 			}
 			else if (!isStatusWordBitSet(statusWord, SW_MODULE_MOVING_BIT) || isStatusWordBitSet(statusWord, SW_BRAKE_ENGAGED_BIT)) {

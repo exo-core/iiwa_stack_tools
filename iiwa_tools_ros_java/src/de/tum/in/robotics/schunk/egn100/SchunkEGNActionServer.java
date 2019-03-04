@@ -1,8 +1,8 @@
 /**  
  * Copyright (C) 2018 Arne Peters - arne.peters@tum.de
- * Technische Universitï¿½t Mï¿½nchen
+ * Technische Universität München
  * Chair for Robotics, Artificial Intelligence and Embedded Systems 
- * Fakultï¿½t fï¿½r Informatik / I6, Boltzmannstraï¿½e 3, 85748 Garching bei Mï¿½nchen, Germany
+ * Fakultät für Informatik / I6, Boltzmannstraße 3, 85748 Garching bei München, Germany
  * http://www6.in.tum.de
  * All rights reserved.
  * 
