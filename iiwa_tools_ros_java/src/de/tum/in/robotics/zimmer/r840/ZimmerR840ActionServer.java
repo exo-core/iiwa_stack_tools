@@ -1,8 +1,8 @@
-﻿/**
+/**
  * Copyright (C) 2018 Arne Peters - arne.peters@tum.de
- * Technische Universität München
+ * Technische Universit�t M�nchen
  * Chair for Robotics, Artificial Intelligence and Embedded Systems
- * Fakultät für Informatik / I6, Boltzmannstraße 3, 85748 Garching bei München, Germany
+ * Fakult�t f�r Informatik / I6, Boltzmannstra�e 3, 85748 Garching bei M�nchen, Germany
  * http://www6.in.tum.de
  * All rights reserved.
  *
@@ -40,6 +40,9 @@ import com.github.rosjava_actionlib.ActionServerListener;
 
 import de.tum.in.camp.kuka.ros.Configuration;
 
+import iiwa_tool_msgs.CalibrateToolActionFeedback;
+import iiwa_tool_msgs.CalibrateToolActionGoal;
+import iiwa_tool_msgs.CalibrateToolActionResult;
 import iiwa_tool_msgs.MoveGripperActionFeedback;
 import iiwa_tool_msgs.MoveGripperActionGoal;
 import iiwa_tool_msgs.MoveGripperActionResult;
@@ -48,7 +51,8 @@ import org.ros.internal.message.Message;
 
 public class ZimmerR840ActionServer extends AbstractNodeMain {
 	public enum GoalType {
-		MOVE_GRIPPER
+		MOVE_GRIPPER,
+		REFERENCE_GRIPPER
 	}
 	
 	public class Goal<T_ACTION_GOAL extends Message> {
@@ -103,6 +107,7 @@ public class ZimmerR840ActionServer extends AbstractNodeMain {
 	}
 	
 	private ActionServer<MoveGripperActionGoal, MoveGripperActionFeedback, MoveGripperActionResult> moveGripperServer = null;
+  private ActionServer<CalibrateToolActionGoal, CalibrateToolActionFeedback, CalibrateToolActionResult> referenceGripperServer = null;
 	Queue<Goal<?>> goalQueue;
 	Goal<?> currentGoal;
 	
@@ -128,6 +133,14 @@ public class ZimmerR840ActionServer extends AbstractNodeMain {
 				return goal.getGoalId().getId();
 			}
 		});
+
+    referenceGripperServer = new ActionServer<CalibrateToolActionGoal, CalibrateToolActionFeedback, CalibrateToolActionResult>(node, iiwaName+"/action/reference_gripper", CalibrateToolActionGoal._TYPE, CalibrateToolActionFeedback._TYPE, CalibrateToolActionResult._TYPE);
+    referenceGripperServer.attachListener(new GripperActionServerListener<CalibrateToolActionGoal>(this, GoalType.REFERENCE_GRIPPER) {
+      @Override
+      public String getGoalId(CalibrateToolActionGoal goal) {
+        return goal.getGoalId().getId();
+      }
+    });
 	}
 	
 	/**
@@ -155,8 +168,26 @@ public class ZimmerR840ActionServer extends AbstractNodeMain {
 	private synchronized void markCurrentGoal(boolean succeeded, GripperState state, String error_msg) {
 		if (hasCurrentGoal()) {
 			switch (currentGoal.goalType) {
+			  case REFERENCE_GRIPPER: {
+			    CalibrateToolActionResult result = referenceGripperServer.newResultMessage();
+          result.getResult().setSuccess(succeeded);
+          result.getResult().setErrorMessage(error_msg);
+			    if (succeeded) {
+            result.getStatus().setStatus(GoalStatus.SUCCEEDED);
+            referenceGripperServer.setSucceed(currentGoal.goalId);
+          }
+          else {
+            result.getStatus().setStatus(GoalStatus.ABORTED);
+            referenceGripperServer.setAborted(currentGoal.goalId);
+          }
+			    referenceGripperServer.sendResult(result);
+			    referenceGripperServer.setGoalStatus(result.getStatus(), currentGoal.goalId);
+          break;
+			  }
 				case MOVE_GRIPPER: {
 					MoveGripperActionResult result = moveGripperServer.newResultMessage();
+          //result.getResult().setSuccess(succeeded);
+          //result.getResult().setErrorMessage(error_msg);
 					
 					switch (state) {
 					case GRIPPED:

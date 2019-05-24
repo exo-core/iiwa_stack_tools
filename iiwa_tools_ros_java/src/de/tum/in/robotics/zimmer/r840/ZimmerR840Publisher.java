@@ -1,8 +1,8 @@
-﻿/**
+/**
  * Copyright (C) 2018 Arne Peters - arne.peters@tum.de
- * Technische Universität München
+ * Technische Universit�t M�nchen
  * Chair for Robotics, Artificial Intelligence and Embedded Systems
- * Fakultät für Informatik / I6, Boltzmannstraße 3, 85748 Garching bei München, Germany
+ * Fakult�t f�r Informatik / I6, Boltzmannstra�e 3, 85748 Garching bei M�nchen, Germany
  * http://www6.in.tum.de
  * All rights reserved.
  *
@@ -51,7 +51,7 @@ public class ZimmerR840Publisher extends AbstractNodeMain {
 	private sensor_msgs.JointState js;
 	
 	// Configuration
-	private boolean publishJointStates;
+	private boolean publishJointStates = true;
 
 	/**
 	 * Create a ROS node with publishers for a robot state. <br>
@@ -61,7 +61,7 @@ public class ZimmerR840Publisher extends AbstractNodeMain {
 	 */
 	public ZimmerR840Publisher(Configuration configuration) {
 		this.robotName = configuration.getRobotName();
-		this.publishJointStates = configuration.getPublishJointStates();
+		//this.publishJointStates = configuration.getPublishJointStates();
 		helper = new MessageGenerator(robotName, configuration.getTimeProvider());
 
 		js = helper.buildMessage(sensor_msgs.JointState._TYPE);
@@ -122,5 +122,9 @@ public class ZimmerR840Publisher extends AbstractNodeMain {
 			}
 			jointStatePublisher.publish(js);
 		}
+	}
+	
+	public MessageGenerator getHelper() {
+	  return helper;
 	}
 }
