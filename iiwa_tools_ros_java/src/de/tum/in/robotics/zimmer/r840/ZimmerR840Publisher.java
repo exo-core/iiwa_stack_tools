@@ -123,8 +123,4 @@ public class ZimmerR840Publisher extends AbstractNodeMain {
 			jointStatePublisher.publish(js);
 		}
 	}
-	
-	public MessageGenerator getHelper() {
-	  return helper;
-	}
 }

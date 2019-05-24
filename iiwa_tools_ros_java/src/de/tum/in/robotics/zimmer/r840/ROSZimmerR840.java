@@ -33,18 +33,14 @@ import org.ros.address.BindAddress;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 
-import sun.awt.windows.ThemeReader;
-
 import com.kuka.grippertoolbox.api.state.GripperState;
 import com.kuka.grippertoolbox.gripper.zimmer.AbsoluteMode;
-import com.kuka.grippertoolbox.gripper.zimmer.RelativeMode;
 import com.kuka.grippertoolbox.gripper.zimmer.ZimmerR840;
 
 import de.tum.in.camp.kuka.ros.ActiveTool;
 import de.tum.in.camp.kuka.ros.Configuration;
 import de.tum.in.camp.kuka.ros.Logger;
 import de.tum.in.robotics.zimmer.r840.ZimmerR840ActionServer.Goal;
-import de.tum.in.robotics.zimmer.r840.ZimmerR840ActionServer.GoalType;
 
 public class ROSZimmerR840 implements ActiveTool {
   private class MotionGoal {
