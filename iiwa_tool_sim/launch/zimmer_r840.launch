@@ -1,0 +1,10 @@
+<!-- Start virtual Zimmer R840 gripper -->
+<launch>
+	<param name="wrist_frame" value="zimmer_r840_base" />
+	<param name="finger_1_joint" value="zimmer_r840_rail_1" />
+	<param name="finger_2_joint" value="zimmer_r840_rail_2" />
+	<param name="min_joint_position" value="0.0" />
+	<param name="max_joint_position" value="0.04" />
+	<param name="max_velocity" value="0.08" />
+	<node ns="iiwa" name="zimmer_r840_sim" pkg="iiwa_tool_sim" type="virtual_parallel_gripper" output="screen" />
+</launch>

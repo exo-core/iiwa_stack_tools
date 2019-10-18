@@ -1,0 +1,10 @@
+<!-- Start virtual Schunk EGN100 gripper -->
+<launch>
+	<param name="wrist_frame" value="schunk_egn100_base" />
+	<param name="finger_1_joint" value="schunk_egn100_rail_1" />
+	<param name="finger_2_joint" value="schunk_egn100_rail_2" />
+	<param name="min_joint_position" value="0.0" />
+	<param name="max_joint_position" value="0.01" />
+	<param name="max_velocity" value="0.08" />
+	<node ns="iiwa" name="schunk_egn100_sim" pkg="iiwa_tool_sim" type="virtual_parallel_gripper" output="screen" />
+</launch>
