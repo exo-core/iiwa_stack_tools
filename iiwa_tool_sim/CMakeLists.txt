@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
-  tum_iiwa_gripper_msgs
+  iiwa_tool_msgs
 )
 
 ## System dependencies are found with CMake's conventions
